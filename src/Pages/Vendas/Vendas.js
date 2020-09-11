@@ -127,9 +127,9 @@ class Vendas extends React.Component {
             openFinalizaCompra: false,
             quantidade: '',
             codBarras: '',
-            pago: '',
+            pago: 0,
             troco: 0,
-            formaPagamento: ''
+            formaPagamento: 1
         }
     }
 
@@ -174,7 +174,7 @@ class Vendas extends React.Component {
                     }
                 })
                 .catch(err => {
-                    if(err.message === "Error: 404")
+                    if(err.message === "Error")
                         this.setState({
                             toast: { 
                                 open: true,
@@ -183,13 +183,13 @@ class Vendas extends React.Component {
                             }
                         });
                     else
-                    this.setState({
-                        toast: { 
-                            open: true,
-                            mensagem: `Ocorreu um erro inesperado. ${err.message}. Entre em contato com o suporte.`,
-                            tipo: 'error'
-                        }
-                    });
+                        this.setState({
+                            toast: { 
+                                open: true,
+                                mensagem: `Ocorreu um erro inesperado. Entre em contato com o suporte.`,
+                                tipo: 'error'
+                            }
+                        });
                 });
             }
             else if(event.keyCode < 48 || event.keyCode > 57)
@@ -221,7 +221,7 @@ class Vendas extends React.Component {
         this.setState({invoiceTotal: 0});
         this.setState({quantidade: ''});
         this.setState({codBarras: ''});
-        this.setState({pago: ''});
+        this.setState({pago: 0});
         this.setState({troco: 0});
 
         this.setState({openConfirm: false});
@@ -235,13 +235,21 @@ class Vendas extends React.Component {
     };
 
     handleCloseFinalizaCompra = () => {
+        let arrProdutosCompra = this.state.produtosCompra.productSales.map(object => {
+            return {
+                productId: object.productId,
+                quantity: object.quantity != null ? parseInt(object.quantity) : parseInt(0),
+                total: object.total != null ? parseFloat(object.total) : parseFloat(0)
+            }
+        });
+
         this.setState({
             produtosCompra: {
                 totalValue: this.state.invoiceTotal,
-                formOfPayment: this.state.formaPagamento,
-                amountPaid: this.state.pago,
+                formOfPayment: this.state.formaPagamento != null ? parseInt(this.state.formaPagamento) : parseInt(0),
+                amountPaid: this.state.pago !== null && this.state.pago.toString().trim() !== '' ? parseFloat(this.state.pago) : 0,
                 change: this.state.troco,
-                productSales: [...this.state.produtosCompra.productSales]
+                productSales: [...arrProdutosCompra]
             }
         }, () => {
             VendaService.CriaVenda(this.state.produtosCompra)
@@ -256,16 +264,31 @@ class Vendas extends React.Component {
                             }
                         });    
                         this.setState({troco: 0});
-                        this.setState({pago: ''});
+                        this.setState({pago: 0});
                         this.setState({openFinalizaCompra: false});
-                        this.setState({openFinalizaCompra: false});
+                        this.setState({produtos: []});
+                        this.setState({invoiceTotal: 0});
+                        this.setState({quantidade: ''});
+                        this.setState({codBarras: ''});
+                        this.setState({formaPagamento: 1});
+                        this.setState({
+                            produtosCompra: {
+                                totalValue: "",
+                                formOfPayment: "",
+                                amountPaid: "",
+                                change: "",
+                                productSales: []
+                            }
+                        })
+
+                        document.getElementById("codBarras").focus();
                     }
                 })
                 .catch(err => {
                     this.setState({
                         toast: { 
                             open: true,
-                            mensagem: `Ocorreu um erro inesperado. ${err}. Entre em contato com o suporte.`,
+                            mensagem: `Ocorreu um erro inesperado. Entre em contato com o suporte.`,
                             tipo: 'error'
                         }
                     });
@@ -275,7 +298,7 @@ class Vendas extends React.Component {
 
     handleCloseFinalizaCompraCancel = () => {
         this.setState({troco: 0});
-        this.setState({pago: ''});
+        this.setState({pago: 0});
         this.setState({openFinalizaCompra: false});
     }
 
@@ -329,7 +352,7 @@ class Vendas extends React.Component {
                                     Vendas Ontem
                                 </Typography>
                                 <Typography align="center" className={classes.descCard}>
-                                    R$ 15.000,00
+                                   
                                 </Typography>
                             </Card>            
                         </Grid>
@@ -342,7 +365,7 @@ class Vendas extends React.Component {
                                     Vendas Hoje
                                 </Typography>
                                 <Typography align="center" className={classes.descCard}>
-                                    R$ 17.800,00
+                                    
                                 </Typography>
                             </Card>            
                         </Grid>
@@ -355,7 +378,7 @@ class Vendas extends React.Component {
                                     Items Vendidos
                                 </Typography>
                                 <Typography align="center" className={classes.descCard}>
-                                    300
+                                    
                                 </Typography>
                             </Card>            
                         </Grid>
@@ -368,7 +391,7 @@ class Vendas extends React.Component {
                                     Items em Estoque
                                 </Typography>
                                 <Typography align="center" className={classes.descCard}>
-                                    100
+                                    
                                 </Typography>
                             </Card>            
                         </Grid>
@@ -476,7 +499,6 @@ class Vendas extends React.Component {
                                         id: 'outlined-age-native-simple',
                                     }}
                                 >
-                                    <option aria-label="None" value="" />
                                     <option value={1}>Dinheiro</option>
                                     <option value={2}>Débito</option>
                                     <option value={3}>Crédito</option>

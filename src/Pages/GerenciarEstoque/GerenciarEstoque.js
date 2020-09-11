@@ -79,7 +79,7 @@ class GerenciarEstoque extends Component {
                 this.setState({
                     toast: { 
                         open: true,
-                        mensagem: `Ocorreu um erro inesperado. ${err}. Entre em contato com o suporte.`,
+                        mensagem: `Ocorreu um erro inesperado. Entre em contato com o suporte.`,
                         tipo: 'error'
                     }
                 });
@@ -87,17 +87,12 @@ class GerenciarEstoque extends Component {
     }
 
     validaProduto(produto) {
-        if(produto.externalId == null)
+        if(produto.externalId == null || produto.externalId.trim() === '')
         {
             this.apresentaToast('error', 'O CÓD. é obrigatório.')
             return false;
         }
-        if(produto.measuredUnit == null)
-        {
-            this.apresentaToast('error', 'A UNI. é obrigatória.')
-            return false;
-        }
-        if(produto.description == null)
+        if(produto.description == null || produto.description.trim() === '')
         {
             this.apresentaToast('error', 'A descrição do produto é obrigatória.')
             return false;
@@ -117,6 +112,16 @@ class GerenciarEstoque extends Component {
             this.apresentaToast('error', 'A quantidade do produto em estoque é obrigatória.')
             return false;
         }*/
+        if(produto.barCode == null || produto.barCode.trim() === '')
+        {
+            this.apresentaToast('error', 'O código de barras do produto é obrigatório.')
+            return false;
+        }
+        if(produto.measuredUnit == null || produto.measuredUnit.trim() === '')
+        {
+            this.apresentaToast('error', 'A UNI. é obrigatória.')
+            return false;
+        }
         if(produto.quantity != null && isNaN(produto.quantity))
         {
             this.apresentaToast('error', 'A quantidade não pode conter texto.')
@@ -132,11 +137,6 @@ class GerenciarEstoque extends Component {
             this.apresentaToast('error', 'O valor do produto não pode conter texto.')
             return false;
         }        
-        if(produto.barCode == null)
-        {
-            this.apresentaToast('error', 'O código de barras do produto é obrigatório.')
-            return false;
-        }
 
         return true;
     }
@@ -191,7 +191,7 @@ class GerenciarEstoque extends Component {
                                                 }
                                             })
                                             .catch(err => 
-                                                this.apresentaToast('error', `Ocorreu um erro inesperado. ${err.message}. Entre em contato com o suporte.`)
+                                                this.apresentaToast('error', `Ocorreu um erro inesperado. Entre em contato com o suporte.`)
                                             )
                                     }
                                 }, 600);
@@ -230,7 +230,7 @@ class GerenciarEstoque extends Component {
                                                     }
                                                 })
                                                 .catch(err => 
-                                                    this.apresentaToast('error', `Ocorreu um erro inesperado. ${err.message}. Entre em contato com o suporte.`)
+                                                    this.apresentaToast('error', `Ocorreu um erro inesperado. Entre em contato com o suporte.`)
                                                 )
                                         }
                                     }
@@ -257,7 +257,7 @@ class GerenciarEstoque extends Component {
                                             }
                                         })
                                         .catch(err => 
-                                            this.apresentaToast('error', `Ocorreu um erro inesperado. ${err.message}. Entre em contato com o suporte.`)
+                                            this.apresentaToast('error', `Ocorreu um erro inesperado. Entre em contato com o suporte.`)
                                         )
                                 }, 600);
                             }),
