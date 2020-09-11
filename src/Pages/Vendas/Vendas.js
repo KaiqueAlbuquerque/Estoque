@@ -1,6 +1,10 @@
 import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 
+import ProdutoService from '../../Service/ProdutoService.js';
+import VendaService from '../../Service/VendaService.js';
+import Toast from '../../Componentes/Toast.js';
+
 //Card
 import Card from '@material-ui/core/Card';
 
@@ -44,10 +48,6 @@ import AddShoppingCartIcon from '@material-ui/icons/AddShoppingCart';
 import MoneyOffIcon from '@material-ui/icons/MoneyOff';
 import StorageIcon from '@material-ui/icons/Storage';
 
-//Toast
-import Snackbar from '@material-ui/core/Snackbar';
-import MuiAlert from '@material-ui/lab/Alert';
-
 //Tooltip
 import Tooltip from '@material-ui/core/Tooltip';
 
@@ -63,11 +63,6 @@ function createRow(desc, qty, unit) {
 
 function total(items) {
     return items.map(({ price }) => price).reduce((sum, i) => sum + i, 0);
-}
-
-//Função toast
-function Alert(props) {
-    return <MuiAlert elevation={6} variant="filled" {...props} />;
 }
 
 const useStyles = theme => ({
@@ -113,7 +108,19 @@ class Vendas extends React.Component {
         super(props)
 
         this.state = {
+            toast: {
+                open: false,
+                mensagem: '',
+                tipo: ''
+            },
             produtos: [],
+            produtosCompra: {
+                totalValue: "",
+                formOfPayment: "",
+                amountPaid: "",
+                change: "",
+                productSales: []
+            },
             invoiceTotal: 0,
             open: false,
             openConfirm: false,
@@ -122,8 +129,7 @@ class Vendas extends React.Component {
             codBarras: '',
             pago: '',
             troco: 0,
-            formaPagamento: '',
-            openToast: false
+            formaPagamento: ''
         }
     }
 
@@ -143,10 +149,48 @@ class Vendas extends React.Component {
         if(document.activeElement.id === "codBarras")
         {
             if(event.keyCode === 13) {
-                this.setState({produtos: [...this.state.produtos, createRow('Paperclips (Box)', 100, 1.15)]});
-                this.setState({invoiceTotal: total([...this.state.produtos])});
-                this.setState({quantidade: ''});
-                this.setState({codBarras: ''}); 
+
+                ProdutoService.ListaProdutoCodBarra(document.activeElement.value)
+                .then(res => {
+                    if(res != null){
+                        let quantidade = document.getElementById("quantidade").value === "" ? 1 : document.getElementById("quantidade").value; 
+                        this.setState({produtos: [createRow(res.description, quantidade, res.value.toFixed(2)), ...this.state.produtos]});
+                        this.setState({
+                            produtosCompra: {
+                                totalValue: 0,
+                                formOfPayment: "",
+                                amountPaid: 0,
+                                change: 0,
+                                productSales: [...this.state.produtosCompra.productSales, {
+                                    productId: res.id, 
+                                    quantity: quantidade, 
+                                    total: (res.value * quantidade).toFixed(2)
+                                }]
+                            }
+                        });
+                        this.setState({invoiceTotal: total([...this.state.produtos])});
+                        this.setState({quantidade: ''});
+                        this.setState({codBarras: ''});
+                    }
+                })
+                .catch(err => {
+                    if(err.message === "Error: 404")
+                        this.setState({
+                            toast: { 
+                                open: true,
+                                mensagem: "Produto não encontrado.",
+                                tipo: 'error'
+                            }
+                        });
+                    else
+                    this.setState({
+                        toast: { 
+                            open: true,
+                            mensagem: `Ocorreu um erro inesperado. ${err.message}. Entre em contato com o suporte.`,
+                            tipo: 'error'
+                        }
+                    });
+                });
             }
             else if(event.keyCode < 48 || event.keyCode > 57)
                 event.preventDefault()
@@ -191,9 +235,42 @@ class Vendas extends React.Component {
     };
 
     handleCloseFinalizaCompra = () => {
-        this.setState({troco: 0});
-        this.setState({pago: ''});
-        this.setState({openFinalizaCompra: false});
+        this.setState({
+            produtosCompra: {
+                totalValue: this.state.invoiceTotal,
+                formOfPayment: this.state.formaPagamento,
+                amountPaid: this.state.pago,
+                change: this.state.troco,
+                productSales: [...this.state.produtosCompra.productSales]
+            }
+        }, () => {
+            VendaService.CriaVenda(this.state.produtosCompra)
+                .then(res => {
+                    if(res != null)
+                    {
+                        this.setState({
+                            toast: { 
+                                open: true,
+                                mensagem: "Venda finalizada com sucesso.",
+                                tipo: 'success'
+                            }
+                        });    
+                        this.setState({troco: 0});
+                        this.setState({pago: ''});
+                        this.setState({openFinalizaCompra: false});
+                        this.setState({openFinalizaCompra: false});
+                    }
+                })
+                .catch(err => {
+                    this.setState({
+                        toast: { 
+                            open: true,
+                            mensagem: `Ocorreu um erro inesperado. ${err}. Entre em contato com o suporte.`,
+                            tipo: 'error'
+                        }
+                    });
+                })
+        });
     };
 
     handleCloseFinalizaCompraCancel = () => {
@@ -223,15 +300,13 @@ class Vendas extends React.Component {
         if(this.state.produtos.length > 0)
             this.setState({openFinalizaCompra: true});
         else
-            this.setState({openToast: true});
-    };
-
-    funcCloseToast = (event, reason) => {
-        if (reason === 'clickaway') {
-            return;
-        }
-      
-        this.setState({openToast: false});
+            this.setState({
+                toast: { 
+                    open: true,
+                    mensagem: "É necessário ter algum produto para finalizar a compra.",
+                    tipo: 'error'
+                }
+            });
     };
 
     render(){
@@ -391,27 +466,27 @@ class Vendas extends React.Component {
                         <DialogContent>
                             <FormControl variant="outlined" fullWidth className={classes.form}>
                                 <InputLabel htmlFor="outlined-age-native-simple">Forma de Pagamento</InputLabel>
-                                    <Select
-                                        onChange={this.changeFormaPagamento}
-                                        native
-                                        value={this.state.formaPagamento}
-                                        label="Forma de Pagamento"
-                                        inputProps={{
-                                            name: 'Forma de Pagamento',
-                                            id: 'outlined-age-native-simple',
-                                        }}
-                                    >
-                                        <option aria-label="None" value="" />
-                                        <option value={0}>Dinheiro</option>
-                                        <option value={1}>Débito</option>
-                                        <option value={2}>Crédito</option>
-                                    </Select>
+                                <Select
+                                    onChange={this.changeFormaPagamento}
+                                    native
+                                    value={this.state.formaPagamento}
+                                    label="Forma de Pagamento"
+                                    inputProps={{
+                                        name: 'Forma de Pagamento',
+                                        id: 'outlined-age-native-simple',
+                                    }}
+                                >
+                                    <option aria-label="None" value="" />
+                                    <option value={1}>Dinheiro</option>
+                                    <option value={2}>Débito</option>
+                                    <option value={3}>Crédito</option>
+                                </Select>
                             </FormControl>
                             <TextField
+                                autoComplete="off"
                                 className={classes.form}
                                 value={this.state.pago} 
                                 onChange={this.changePago}
-                                margin="dense"
                                 id="pago"
                                 label="Valor Pago"
                                 fullWidth
@@ -434,11 +509,15 @@ class Vendas extends React.Component {
                         </DialogActions>
                     </Dialog>   
 
-                    <Snackbar open={this.state.openToast} autoHideDuration={6000} onClose={this.funcCloseToast}>
-                        <Alert onClose={this.closeToast} severity="error">
-                            É necessário ter algum produto para finalizar a compra.
-                        </Alert>
-                    </Snackbar>      
+                    <Toast
+                        open={this.state.toast.open}
+                        handleClose={() =>
+                            this.setState({ toast: { open: false } })
+                        }
+                        severity={this.state.toast.tipo}
+                    >
+                        {this.state.toast.mensagem}
+                    </Toast> 
                 </Dialog>
             </div>
         )

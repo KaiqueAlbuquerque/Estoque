@@ -75,7 +75,7 @@ export default function ClippedDrawer() {
               {texto: 'Gerenciar Estoque', icone: <StorageIcon />, to: '/gerenciarEstoque'}, 
               {texto: 'Vendas', icone: <BusinessCenterIcon />, to: '/vendas'}
             ].map((text, index) => (
-              <NavLink to={text.to} className={classes.retiraCssDefault}>
+              <NavLink key={text.to} to={text.to} className={classes.retiraCssDefault}>
                 <ListItem button key={text.texto}>
                   <ListItemIcon>{text.icone}</ListItemIcon>
                   <ListItemText>{text.texto}</ListItemText>
