@@ -343,58 +343,7 @@ class Vendas extends React.Component {
                           alignItems="center"
                           style={{ minHeight: '70vh' }}
                     >
-                        <Grid item xs={3}>
-                            <Card raised className={classes.card}>
-                                <Typography align="center">
-                                    <MoneyOffIcon fontSize="large"/>
-                                </Typography>
-                                <Typography fontWeight="fontWeightBold" align="center" className={classes.tituloCard}>
-                                    Vendas Ontem
-                                </Typography>
-                                <Typography align="center" className={classes.descCard}>
-                                   
-                                </Typography>
-                            </Card>            
-                        </Grid>
-                        <Grid item xs={3}>
-                            <Card raised className={classes.card}>
-                                <Typography align="center">
-                                    <AttachMoneyIcon fontSize="large"/>
-                                </Typography>
-                                <Typography align="center" className={classes.tituloCard}>
-                                    Vendas Hoje
-                                </Typography>
-                                <Typography align="center" className={classes.descCard}>
-                                    
-                                </Typography>
-                            </Card>            
-                        </Grid>
-                        <Grid item xs={3}>
-                            <Card raised className={classes.card}>
-                                <Typography align="center">
-                                    <AddShoppingCartIcon fontSize="large"/>
-                                </Typography>
-                                <Typography align="center" className={classes.tituloCard}>
-                                    Items Vendidos
-                                </Typography>
-                                <Typography align="center" className={classes.descCard}>
-                                    
-                                </Typography>
-                            </Card>            
-                        </Grid>
-                        <Grid item xs={3}>
-                            <Card raised className={classes.card}>
-                                <Typography align="center">
-                                    <StorageIcon fontSize="large"/>
-                                </Typography>
-                                <Typography align="center" className={classes.tituloCard}>
-                                    Items em Estoque
-                                </Typography>
-                                <Typography align="center" className={classes.descCard}>
-                                    
-                                </Typography>
-                            </Card>            
-                        </Grid>
+                        
                     </Grid>
                 </Container>
                 

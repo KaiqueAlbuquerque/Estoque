@@ -68,6 +68,13 @@ class GerenciarEstoque extends Component {
     }
 
     componentDidMount() {
+
+        if(document.getElementsByClassName("jss142")[0] != null){
+            document.getElementsByClassName("jss142")[0].addEventListener("click", () => {
+                window.scrollTo(0,document.body.scrollHeight);
+            });
+        }
+
         ProdutoService.ListaProdutos()
             .then(res => {
                 if(res != null)
@@ -180,8 +187,17 @@ class GerenciarEstoque extends Component {
                                     
                                     if(this.validaProduto(newData))
                                     {
-                                        if(newData.value != null)
-                                            newData.value = newData.value.toString().replace(',','.');
+                                        if(newData.value != null && newData.value.toString().trim() !== '')
+                                            newData.value = parseFloat(newData.value.toString().replace(',','.'));
+                                    
+                                        if(newData.value != null && newData.value.toString().trim() === '')
+                                            newData.value = parseFloat(0);
+
+                                        if(newData.quantity != null && newData.quantity.toString().trim() !== '')
+                                            newData.quantity = parseInt(newData.quantity);
+                                        
+                                        if(newData.quantity != null && newData.quantity.toString().trim() === '')
+                                            newData.quantity = parseInt(0);
                                         
                                         ProdutoService.CriaProduto(newData)
                                             .then(res => {
@@ -207,13 +223,17 @@ class GerenciarEstoque extends Component {
                                         
                                         if(this.validaProduto(newData))
                                         {
-                                            if(newData.value != null){
-                                                newData.value = newData.value.toString().replace(',','.');
-                                                newData.value = parseFloat(newData.value);
-                                            }
-                                            else{
+                                            if(newData.value != null && newData.value.toString().trim() !== '')
+                                                newData.value = parseFloat(newData.value.toString().replace(',','.'));
+                                        
+                                            if(newData.value != null && newData.value.toString().trim() === '')
                                                 newData.value = parseFloat(0);
-                                            }
+
+                                            if(newData.quantity != null && newData.quantity.toString().trim() !== '')
+                                                newData.quantity = parseInt(newData.quantity);
+                                            
+                                            if(newData.quantity != null && newData.quantity.toString().trim() === '')
+                                                newData.quantity = parseInt(0);                                          
 
                                             ProdutoService.AtualizaProduto(newData.id, newData)
                                                 .then(res => {
