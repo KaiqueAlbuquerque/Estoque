@@ -152,6 +152,7 @@ class Vendas extends React.Component {
 
                 ProdutoService.ListaProdutoCodBarra(document.activeElement.value)
                 .then(res => {
+                    debugger
                     if(res != null){
                         let quantidade = document.getElementById("quantidade").value === "" ? 1 : document.getElementById("quantidade").value; 
                         this.setState({produtos: [createRow(res.description, quantidade, res.value.toFixed(2)), ...this.state.produtos]});

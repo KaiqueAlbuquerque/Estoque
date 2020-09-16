@@ -29,12 +29,12 @@ const Tabela = props => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                {rows.map(row => (
-                    <TableRow key={row.desc}>
-                    <TableCell>{row.desc}</TableCell>
-                    <TableCell align="right">{row.qty}</TableCell>
-                    <TableCell align="right">R${row.unit}</TableCell>
-                    <TableCell align="right">R${ccyFormat(row.price)}</TableCell>
+                {rows.map((row, index) => (
+                    <TableRow key={index}>
+                        <TableCell>{row.desc}</TableCell>
+                        <TableCell align="right">{row.qty}</TableCell>
+                        <TableCell align="right">R${row.unit}</TableCell>
+                        <TableCell align="right">R${ccyFormat(row.price)}</TableCell>
                     </TableRow>
                 ))}
 

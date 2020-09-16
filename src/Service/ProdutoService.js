@@ -1,5 +1,6 @@
-const urlBase = 'http://192.168.0.10/pdv-back/api/products'
-//const urlBase = 'https://localhost:44346/api/products'
+//const urlBase = 'http://localhost/pdv/api/products'
+//const urlBase = 'http://192.168.0.10/pdv-back/api/products'
+const urlBase = 'https://localhost:44346/api/products'
 
 const consomeApi = (parametro = '', method = 'GET', body) => {
     let obj = JSON.stringify(body);
