@@ -22,6 +22,7 @@ const Tabela = props => {
             <Table aria-label="spanning table">
                 <TableHead>
                     <TableRow>
+                        <TableCell>Item</TableCell>
                         <TableCell>Descrição</TableCell>
                         <TableCell align="right">Quantidade</TableCell>
                         <TableCell align="right">Valor Unitário</TableCell>
@@ -30,7 +31,8 @@ const Tabela = props => {
                 </TableHead>
                 <TableBody>
                 {rows.map((row, index) => (
-                    <TableRow key={index}>
+                    <TableRow key={++index}>
+                        <TableCell>{index}</TableCell>
                         <TableCell>{row.desc}</TableCell>
                         <TableCell align="right">{row.qty}</TableCell>
                         <TableCell align="right">R${row.unit}</TableCell>

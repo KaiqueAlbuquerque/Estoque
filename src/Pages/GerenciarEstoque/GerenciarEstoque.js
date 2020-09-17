@@ -139,7 +139,7 @@ class GerenciarEstoque extends Component {
             this.apresentaToast('error', 'O valor do produto é obrigatório.')
             return false;
         }*/
-        if(produto.value != null && isNaN(produto.value))
+        if(produto.value != null && isNaN(produto.value.replace(',','.')))
         {
             this.apresentaToast('error', 'O valor do produto não pode conter texto.')
             return false;

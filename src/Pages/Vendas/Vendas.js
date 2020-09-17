@@ -125,11 +125,13 @@ class Vendas extends React.Component {
             open: false,
             openConfirm: false,
             openFinalizaCompra: false,
+            openRemoverProduto: false,
             quantidade: '',
             codBarras: '',
             pago: 0,
             troco: 0,
-            formaPagamento: 1
+            formaPagamento: 1,
+            itemRemover: 0
         }
     }
 
@@ -146,13 +148,17 @@ class Vendas extends React.Component {
             event.preventDefault();
             this.finalizarCompra();
         }
+        if(event.keyCode === 114){
+            event.preventDefault();
+            this.removerProdutoCompra();
+        }
         if(document.activeElement.id === "codBarras")
         {
             if(event.keyCode === 13) {
 
                 ProdutoService.ListaProdutoCodBarra(document.activeElement.value)
                 .then(res => {
-                    debugger
+                    
                     if(res != null){
                         let quantidade = document.getElementById("quantidade").value === "" ? 1 : document.getElementById("quantidade").value; 
                         this.setState({produtos: [createRow(res.description, quantidade, res.value.toFixed(2)), ...this.state.produtos]});
@@ -162,11 +168,11 @@ class Vendas extends React.Component {
                                 formOfPayment: "",
                                 amountPaid: 0,
                                 change: 0,
-                                productSales: [...this.state.produtosCompra.productSales, {
+                                productSales: [{
                                     productId: res.id, 
                                     quantity: quantidade, 
                                     total: (res.value * quantidade).toFixed(2)
-                                }]
+                                }, ...this.state.produtosCompra.productSales]
                             }
                         });
                         this.setState({invoiceTotal: total([...this.state.produtos])});
@@ -235,6 +241,45 @@ class Vendas extends React.Component {
         this.setState({openConfirm: false});
     };
 
+    handleCloseRemoverProduto = () => {
+
+        let itemRemover = this.state.itemRemover - 1;
+        
+        if(itemRemover >= 0 && itemRemover < this.state.produtos.length)
+        {
+            let arrProdutos = this.state.produtos;
+            arrProdutos.splice(itemRemover, 1);
+
+            let arrProdutosCompra = this.state.produtosCompra.productSales;
+            let removed = arrProdutosCompra.splice(itemRemover, 1);
+            debugger
+            let total = this.state.invoiceTotal - parseFloat(removed[0].total);
+            this.setState({
+                produtos: arrProdutos,
+                invoiceTotal: total,
+                produtosCompra: {
+                    totalValue: total,
+                    formOfPayment: this.state.formaPagamento != null ? parseInt(this.state.formaPagamento) : parseInt(0),
+                    amountPaid: this.state.pago !== null && this.state.pago.toString().trim() !== '' ? parseFloat(this.state.pago) : 0,
+                    change: this.state.troco,
+                    productSales: [...arrProdutosCompra]
+                }
+            })
+
+            this.handleCloseRemoverProdutoCancel();
+        }
+        else
+        {
+            this.setState({
+                toast: { 
+                    open: true,
+                    mensagem: "Item não existente.",
+                    tipo: 'error'
+                }
+            });  
+        }
+    }
+
     handleCloseFinalizaCompra = () => {
         let arrProdutosCompra = this.state.produtosCompra.productSales.map(object => {
             return {
@@ -244,58 +289,79 @@ class Vendas extends React.Component {
             }
         });
 
-        this.setState({
-            produtosCompra: {
-                totalValue: this.state.invoiceTotal,
-                formOfPayment: this.state.formaPagamento != null ? parseInt(this.state.formaPagamento) : parseInt(0),
-                amountPaid: this.state.pago !== null && this.state.pago.toString().trim() !== '' ? parseFloat(this.state.pago) : 0,
-                change: this.state.troco,
-                productSales: [...arrProdutosCompra]
-            }
-        }, () => {
-            VendaService.CriaVenda(this.state.produtosCompra)
-                .then(res => {
-                    if(res != null)
-                    {
+        let totalCompra = parseFloat(this.state.invoiceTotal.toFixed(2));
+        let pago = this.state.pago !== null && this.state.pago.toString().trim() !== '' ? parseFloat(this.state.pago) : 0
+
+        if(pago < totalCompra)
+        {
+            this.setState({
+                toast: { 
+                    open: true,
+                    mensagem: `O valor pago não pode ser menor do que o valor da compra.`,
+                    tipo: 'error'
+                }
+            });
+        }
+        else
+        {
+            this.setState({
+                produtosCompra: {
+                    totalValue: totalCompra,
+                    formOfPayment: this.state.formaPagamento != null ? parseInt(this.state.formaPagamento) : parseInt(0),
+                    amountPaid: pago,
+                    change: this.state.troco,
+                    productSales: [...arrProdutosCompra]
+                }
+            }, () => {
+                VendaService.CriaVenda(this.state.produtosCompra)
+                    .then(res => {
+                        if(res != null)
+                        {
+                            this.setState({
+                                toast: { 
+                                    open: true,
+                                    mensagem: "Venda finalizada com sucesso.",
+                                    tipo: 'success'
+                                }
+                            });    
+                            this.setState({troco: 0});
+                            this.setState({pago: 0});
+                            this.setState({openFinalizaCompra: false});
+                            this.setState({produtos: []});
+                            this.setState({invoiceTotal: 0});
+                            this.setState({quantidade: ''});
+                            this.setState({codBarras: ''});
+                            this.setState({formaPagamento: 1});
+                            this.setState({
+                                produtosCompra: {
+                                    totalValue: "",
+                                    formOfPayment: "",
+                                    amountPaid: "",
+                                    change: "",
+                                    productSales: []
+                                }
+                            })
+    
+                            document.getElementById("codBarras").focus();
+                        }
+                    })
+                    .catch(err => {
                         this.setState({
                             toast: { 
                                 open: true,
-                                mensagem: "Venda finalizada com sucesso.",
-                                tipo: 'success'
+                                mensagem: `Ocorreu um erro inesperado. Entre em contato com o suporte.`,
+                                tipo: 'error'
                             }
-                        });    
-                        this.setState({troco: 0});
-                        this.setState({pago: 0});
-                        this.setState({openFinalizaCompra: false});
-                        this.setState({produtos: []});
-                        this.setState({invoiceTotal: 0});
-                        this.setState({quantidade: ''});
-                        this.setState({codBarras: ''});
-                        this.setState({formaPagamento: 1});
-                        this.setState({
-                            produtosCompra: {
-                                totalValue: "",
-                                formOfPayment: "",
-                                amountPaid: "",
-                                change: "",
-                                productSales: []
-                            }
-                        })
-
-                        document.getElementById("codBarras").focus();
-                    }
-                })
-                .catch(err => {
-                    this.setState({
-                        toast: { 
-                            open: true,
-                            mensagem: `Ocorreu um erro inesperado. Entre em contato com o suporte.`,
-                            tipo: 'error'
-                        }
-                    });
-                })
-        });
+                        });
+                    })
+            });
+        }
     };
+
+    handleCloseRemoverProdutoCancel = () => {
+        this.setState({itemRemover: 0});
+        this.setState({openRemoverProduto: false});
+    }
 
     handleCloseFinalizaCompraCancel = () => {
         this.setState({troco: 0});
@@ -311,14 +377,31 @@ class Vendas extends React.Component {
         this.setState({codBarras: e.target.value});
     };
 
+    changeItemRemover = (e) => {
+        this.setState({itemRemover: e.target.value});
+    }
+
     changePago = (e) => {
         this.setState({pago: e.target.value});
-        this.setState({troco: e.target.value - this.state.invoiceTotal});
+        this.setState({troco: e.target.value.replace(',', '.') - this.state.invoiceTotal});
     };
 
     changeFormaPagamento = (e) => {
         this.setState({formaPagamento: e.target.value});
     };
+
+    removerProdutoCompra = () => {
+        if(this.state.produtos.length > 0)
+            this.setState({openRemoverProduto: true});
+        else
+            this.setState({
+                toast: { 
+                    open: true,
+                    mensagem: "É necessário ter algum produto para poder remover.",
+                    tipo: 'error'
+                }
+            });
+    }
 
     finalizarCompra = () => {
         if(this.state.produtos.length > 0)
@@ -477,6 +560,35 @@ class Vendas extends React.Component {
                             </Button>
                             <Button onClick={this.handleCloseFinalizaCompra} color="primary">
                                 Finalizar Compra
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
+
+                    <Dialog disableBackdropClick
+                            disableEscapeKeyDown
+                            open={this.state.openRemoverProduto} 
+                            onClose={this.handleCloseRemoverProduto}
+                            TransitionComponent={Transition}>
+                        <DialogTitle id="form-dialog-title">Remover Produto</DialogTitle>
+                        <DialogContent>
+                            <TextField
+                                type="number"
+                                autoComplete="off"
+                                className={classes.form}
+                                value={this.state.itemRemover} 
+                                onChange={this.changeItemRemover}
+                                id="itemRemover"
+                                label="Número do Item"
+                                fullWidth
+                                variant="outlined"
+                            />   
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={this.handleCloseRemoverProdutoCancel} color="primary">
+                                Voltar
+                            </Button>
+                            <Button onClick={this.handleCloseRemoverProduto} color="primary">
+                                Remover
                             </Button>
                         </DialogActions>
                     </Dialog>   
